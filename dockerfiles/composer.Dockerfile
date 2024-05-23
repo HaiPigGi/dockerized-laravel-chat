@@ -5,8 +5,7 @@ FROM composer:latest
 LABEL maintainer="leonardobryan32@gmail.com"
 
 # Add group and set up user
-
-RUN addgroup -g 1000 laravel && adduser -G laravel -g laravel -s /bin/sh -D laravel
+RUN addgroup --gid 1000 laravel && adduser --ingroup laravel --gecos '' --disabled-password --shell /bin/sh --home /home/laravel laravel
 
 # Set up the user
 
