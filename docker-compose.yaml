@@ -1,0 +1,56 @@
+version: "3.8"
+
+# set-up services
+
+services:
+  # set-up nginx for the web server
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfiles/nginx.Dockerfile
+    ports:
+      - "8000:80"
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      - php
+      - database
+
+  # set-up php
+  php:
+    build:
+      context: ./dockerfiles
+      dockerfile: php.Dockerfile
+    volumes:
+      - ./src:/var/www/html:delegated
+
+  # set-up database with postgrey
+  database:
+    image: postgres:13-alpine
+    env_file:
+      - .env/pg.env
+    ports:
+      - "5432:5432"
+
+  # set-up composer for the laravel
+  composer:
+    build:
+      context: ./dockerfiles
+      dockerfile: composer.Dockerfile
+    volumes:
+      - ./src:/var/www/html
+
+  # set-up artisan for the laravel
+  artisan:
+    build:
+      context: ./dockerfiles
+      dockerfile: artisan.Dockerfile
+    volumes:
+      - ./src:/var/www/html
+    entrypoint: ["php", "/var/www/html/artisan"]
+
+  # set-up redis for the laravel
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
