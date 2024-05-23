@@ -1,6 +1,19 @@
 version: "3.8"
 
 # set-up networks
+networks:
+  private-net: # Jaringan internal untuk layanan yang hanya dapat diakses secara internal
+    ipam: # IP Address Management (ipam)
+      driver: default
+      config:
+        - subnet: 172.20.102.0/24
+    internal: true
+
+  public-net: # Jaringan untuk layanan yang dapat diakses dari luar
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.102.0/24
 
 # set-up services
 services:
@@ -15,9 +28,13 @@ services:
     volumes:
       - ./src:/var/www/html
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/db_proxy.conf:/etc/nginx/conf.d/db_proxy.conf:ro # add proxy configuration
     depends_on:
       - php
       - database
+    networks:
+      - private-net
+      - public-net
 
   # set-up php
   php:
@@ -27,6 +44,8 @@ services:
       dockerfile: ./dockerfiles/php.Dockerfile
     volumes:
       - ./src:/var/www/html:delegated
+    networks:
+      - private-net
 
   # set-up database with postgrey
   database:
@@ -36,6 +55,8 @@ services:
       - ./.env/pg.env
     ports:
       - "5432:5432"
+    networks:
+      - private-net
 
   # set-up composer for the laravel
   composer:
@@ -44,6 +65,8 @@ services:
       dockerfile: composer.Dockerfile
     volumes:
       - ./src:/var/www/html
+    networks:
+      - private-net
 
   # set-up artisan for the laravel
   artisan:
@@ -53,6 +76,8 @@ services:
     volumes:
       - ./src:/var/www/html
     entrypoint: ["php", "/var/www/html/artisan"]
+    networks:
+      - private-net
 
   # set-up redis for the laravel
   redis:
@@ -62,3 +87,16 @@ services:
       dockerfile: ./dockerfiles/redis.Dockerfile
     ports:
       - "6379:6379"
+    networks:
+      - private-net
+
+  # set-up pgAdmin for PostgreSQL management
+  adminer:
+    container_name: "adminer-server"
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - private-net
+      - public-net
