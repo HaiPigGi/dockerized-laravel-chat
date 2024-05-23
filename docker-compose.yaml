@@ -6,8 +6,8 @@ services:
   # set-up nginx for the web server
   server:
     build:
-      context: .
-      dockerfile: Dockerfiles/nginx.Dockerfile
+      context: ./dockerfiles
+      dockerfile: nginx.Dockerfile
     ports:
       - "8000:80"
     volumes:
@@ -28,7 +28,7 @@ services:
   database:
     image: postgres:13-alpine
     env_file:
-      - .env/pg.env
+      - ./.env/pg.env
     ports:
       - "5432:5432"
 
