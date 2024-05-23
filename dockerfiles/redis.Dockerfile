@@ -1,7 +1,7 @@
 FROM redis:alpine
 
 # Tambahkan metadata
-LABEL maintainer="HaiPigGi"
+LABEL maintainer="leonardobryan32@gmail.com"
 
 # Run redis-server
 

@@ -2,7 +2,7 @@
 FROM php:8.2-fpm
 
 # Tambahkan metadata
-LABEL maintainer="HaiPigGi"
+LABEL maintainer="leonardobryan32@gmail.com"
 
 # set-up working dir
 
@@ -10,7 +10,7 @@ WORKDIR /var/www/html
 
 # copy all from src
 
-COPY src .
+COPY ../src .
 
 # install dependencies for postgresql
 
