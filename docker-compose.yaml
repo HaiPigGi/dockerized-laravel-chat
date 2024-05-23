@@ -5,9 +5,10 @@ version: "3.8"
 services:
   # set-up nginx for the web server
   server:
+    container_name: "nginx-server"
     build:
-      context: ./dockerfiles
-      dockerfile: nginx.Dockerfile
+      context: .
+      dockerfile: ./dockerfiles/nginx.Dockerfile
     ports:
       - "8000:80"
     volumes:
@@ -19,14 +20,16 @@ services:
 
   # set-up php
   php:
+    container_name: "php-server"
     build:
-      context: ./dockerfiles
-      dockerfile: php.Dockerfile
+      context: .
+      dockerfile: ./dockerfiles/php.Dockerfile
     volumes:
       - ./src:/var/www/html:delegated
 
   # set-up database with postgrey
   database:
+    container_name: "database-server"
     image: postgres:13-alpine
     env_file:
       - ./.env/pg.env
@@ -44,16 +47,17 @@ services:
   # set-up artisan for the laravel
   artisan:
     build:
-      context: ./dockerfiles
-      dockerfile: php.Dockerfile
+      context: .
+      dockerfile: ./dockerfiles/php.Dockerfile
     volumes:
       - ./src:/var/www/html
     entrypoint: ["php", "/var/www/html/artisan"]
 
   # set-up redis for the laravel
   redis:
+    container_name: "redis-server"
     build:
-      context: ./dockerfiles
-      dockerfile: redis.Dockerfile
+      context: .
+      dockerfile: ./dockerfiles/redis.Dockerfile
     ports:
       - "6379:6379"
