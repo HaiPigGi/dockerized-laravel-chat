@@ -1,7 +1,7 @@
 FROM nginx:stable-alpine
 
 # Tambahkan metadata
-LABEL maintainer="HaiPigGi"
+LABEL maintainer="leonardobryan32@gmail.com"
 
 # set-up working dir
 

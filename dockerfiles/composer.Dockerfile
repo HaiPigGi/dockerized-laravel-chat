@@ -2,7 +2,7 @@ FROM composer:latest
 
 
 # Tambahkan metadata
-LABEL maintainer="HaiPigGi"
+LABEL maintainer="leonardobryan32@gmail.com"
 
 # Add group and set up user
 
