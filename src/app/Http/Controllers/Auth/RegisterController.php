@@ -7,11 +7,10 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Helpers\RedisHelper;
 use App\Helpers\CheckUserHelper;
-use App\Http\Controllers\API\FonnteController;
 use App\Models\profileModel;
 use Illuminate\Support\Facades\DB;
-use App\Helpers\JWTHelper;  
-use Illuminate\Support\Facades\Log;
+use App\Helpers\JWTHelper;
+use App\Helpers\sendCodeHelper;
 
 class RegisterController extends Controller
 {
@@ -42,7 +41,7 @@ class RegisterController extends Controller
             //store validate data to session with Redis
             RedisHelper::set(env('REDIS_KEYS_USER_DATA_SESSION'), json_encode($validateData), 600); // 10 minutes
             //redirect to send verification code
-           $sendVerification =  $this->sendVerificationCode();
+           $sendVerification =   sendCodeHelper::sendVerificationCode();
             
            if ($sendVerification == true ) {
                 return response()->json([
@@ -59,97 +58,24 @@ class RegisterController extends Controller
             ], 500);
         }
     }
-
-         /**
-         * Create Send verification code
-         * 
-         * @return bool
-         */
-        private function sendVerificationCode () {
-            try {
-                // Get user data from session
-                $userData = RedisHelper::get(env('REDIS_KEYS_USER_DATA_SESSION'));
-                
-                // Check if already expired or not found
-                if (!$userData) {
-                    return false;
-                }
-
-                // Decode the user data from JSON
-                $userDataObject = json_decode($userData);
-
-                // Create some verification code 
-                $verificationCode = CheckUserHelper::generateVerificationCode();
-                $phone_number = $userDataObject->phone_number;
-
-                // Prepare data for FonnteController
-                $fonnteRequestData = [
-                    'phone_number' => $phone_number,
-                    'verification_code' => $verificationCode
-                ];
-                
-                // Send verification code to user phone number via Fonnte API
-                $fonnteRequest = new Request($fonnteRequestData);
-                $fonnte = new FonnteController();
-                $fonnte->sendVerificationCode($fonnteRequest);
-                Log::info('Verification code sent successfully: ' . $verificationCode);
-
-                $userDataObject->verification_code = $verificationCode;
-                RedisHelper::set(env('REDIS_KEYS_USER_DATA_SESSION'), json_encode($userDataObject), 120); // Store updated user data with 2 minutes expiration
-                // Check result
-                return true;
-            } catch (\Exception $e) {
-                return false;
-            }
-        }
-
-        /**
-         * Check verification code from user input and if true create user
-         * 
-         * @param Request $request
-         */
-        public function checkVerifyCode(Request $request) {
-            // Get user input verification code
-            $inputCode = $request->input('code');
-
-            // Get user data from session
-            $userData = RedisHelper::get(env('REDIS_KEYS_USER_DATA_SESSION'));
-
-            // Check if user data is found
-            if (!$userData) {
-                return response()->json([
-                    'message' => 'Verification code not found'
-                ], 400);
-            }
-
-            // Decode the user data from JSON
-            $userDataObject = json_decode($userData);
-
-            // Get the verification code from user data
-            $verificationCode = $userDataObject->verification_code ?? null;
-            
-           $check =  CheckUserHelper::checkVerificationCode($verificationCode, $inputCode);
-
-            // Check if the verification code is correct
-            if ($check == true) {
-                // Create user
-                return $this->createUser();
-            } else {
-                return response()->json([
-                    'message' => 'Verification code is incorrect'
-                ], 400);
-            }
-        }
-
-
      /**
      * Create a new user and their profile.
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    private function createUser()
+    public function createUser(Request $request)
     {
         try {
+            $getCode =  $request->input('code');
+            $checkVerifyCode = sendCodeHelper::checkVerifyCode($getCode);
+
+            //check Response from checkVerifyCode
+            if ($checkVerifyCode->getStatusCode() != 200) {
+                return response()->json([
+                    'message' => 'Verification code is incorrect'
+                ], 400);
+            }
+            
             // Get user data from session
             $userData = RedisHelper::get(env('REDIS_KEYS_USER_DATA_SESSION'));
 
@@ -162,7 +88,6 @@ class RegisterController extends Controller
 
             // Start a database transaction
             DB::beginTransaction();
-
 
             // Create user
             $user = new User();
