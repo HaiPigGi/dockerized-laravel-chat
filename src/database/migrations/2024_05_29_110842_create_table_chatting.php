@@ -11,9 +11,37 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('table_chatting', function (Blueprint $table) {
-            $table->id();
+        Schema::create('chat_rooms', function (Blueprint $table) {
+            $table->uuid('chat_room_id')->primary();
+            $table->string('name');
             $table->timestamps();
+        });
+
+        Schema::create('chat_messages', function (Blueprint $table) {
+            $table->uuid('chat_message_id')->primary();
+            $table->uuid('chat_room_id');
+            $table->uuid('user_id');
+            $table->text('message');
+            $table->timestamps();
+
+            $table->foreign('chat_room_id')->references('chat_room_id')->on('chat_rooms')->onDelete('cascade');
+            $table->foreign('user_id')
+                ->references('user_id')
+                ->on('users')
+                ->onDelete('cascade');
+        });
+
+        Schema::create('chat_room_users', function (Blueprint $table) {
+            $table->uuid('chat_room_user_id')->primary();
+            $table->uuid('chat_room_id');
+            $table->uuid('user_id');
+            $table->timestamps();
+
+            $table->foreign('chat_room_id')->references('chat_room_id')->on('chat_rooms')->onDelete('cascade');
+            $table->foreign('user_id')
+                ->references('user_id')
+                ->on('users')
+                ->onDelete('cascade');
         });
     }
 
@@ -22,6 +50,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('table_chatting');
+        Schema::dropIfExists('chat_room_users');
+        Schema::dropIfExists('chat_messages');
+        Schema::dropIfExists('chat_rooms');
     }
 };
