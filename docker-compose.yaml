@@ -2,16 +2,16 @@ version: "3.8"
 
 # set-up networks
 networks:
-  private-net: # Jaringan internal untuk layanan yang hanya dapat diakses secara internal
+  private-net:
     driver: bridge
-    ipam: # IP Address Management (ipam)
+    ipam:
       driver: default
       config:
         - subnet: 172.20.102.0/24
           gateway: 172.20.102.1
     internal: true
 
-  public-net: # Jaringan untuk layanan yang dapat diakses dari luar
+  public-net:
     driver: bridge
     ipam:
       driver: default
@@ -40,8 +40,10 @@ services:
       - php
       - database
     networks:
-      - private-net
-      - public-net
+      private-net:
+        ipv4_address: 172.20.102.2
+      public-net:
+        ipv4_address: 172.16.102.2
 
   # set-up php
   php:
@@ -52,10 +54,11 @@ services:
     volumes:
       - ./src:/var/www/html:delegated
     networks:
-      - private-net
-      - Internet
+      private-net:
+        ipv4_address: 172.20.102.3
+      Internet:
 
-  # set-up database with postgrey
+  # set-up database with postgres
   database:
     container_name: "database-server"
     image: postgres:13-alpine
@@ -65,7 +68,8 @@ services:
     ports:
       - "5432"
     networks:
-      - private-net
+      private-net:
+        ipv4_address: 172.20.102.4
 
   # set-up composer for the laravel
   composer:
@@ -75,7 +79,8 @@ services:
     volumes:
       - ./src:/var/www/html
     networks:
-      - public-net
+      public-net:
+        ipv4_address: 172.16.102.3
 
   # set-up artisan for the laravel
   artisan:
@@ -86,7 +91,8 @@ services:
       - ./src:/var/www/html
     entrypoint: ["php", "/var/www/html/artisan"]
     networks:
-      - private-net
+      private-net:
+        ipv4_address: 172.20.102.5
 
   # set-up redis for the laravel
   redis:
@@ -97,7 +103,8 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - private-net
+      private-net:
+        ipv4_address: 172.20.102.6
 
   # set-up pgAdmin for PostgreSQL management
   adminer:
@@ -105,7 +112,8 @@ services:
     image: adminer
     restart: always
     networks:
-      - private-net
+      private-net:
+        ipv4_address: 172.20.102.7
 
   redis-commander:
     container_name: "redis-commander-server"
@@ -116,5 +124,7 @@ services:
     env_file:
       - ./.env/redis-commander.env
     networks:
-      - private-net
-      - public-net
+      private-net:
+        ipv4_address: 172.20.102.8
+      public-net:
+        ipv4_address: 172.16.102.4
