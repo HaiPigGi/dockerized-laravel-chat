@@ -101,7 +101,7 @@ services:
       context: .
       dockerfile: ./dockerfiles/redis.Dockerfile
     ports:
-      - "6379:6379"
+      - "6379"
     networks:
       private-net:
         ipv4_address: 172.20.102.6
